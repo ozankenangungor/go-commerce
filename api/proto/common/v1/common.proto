@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package common.v1;
+
+option go_package = "github.com/ozankenangungor/go-commerce/api/gen/go/common/v1;commonv1";
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  string status = 1;
+}
