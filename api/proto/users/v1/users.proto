@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package users.v1;
+
+import "common/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/ozankenangungor/go-commerce/api/gen/go/users/v1;usersv1";
+
+// Compatibility notes:
+// - Do not renumber existing fields.
+// - If a field is removed or renamed in the future, reserve its number and name.
+//
+// Error semantics for all response messages in this file:
+// - If error.code != "", the RPC is considered failed and other fields may be unset.
+
+message User {
+  // user_id is a UUID/ULID formatted string identifier.
+  string user_id = 1;
+
+  string email = 2;
+  string name = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message RegisterRequest {
+  common.v1.RequestContext ctx = 1;
+  string email = 2;
+  string password = 3;
+  string name = 4;
+}
+
+message AuthTokens {
+  string access_token = 1;
+  string refresh_token = 2;
+  int64 access_expires_in_seconds = 3;
+  int64 refresh_expires_in_seconds = 4;
+}
+
+message RegisterResponse {
+  User user = 1;
+  AuthTokens tokens = 2;
+
+  // Present only on failure.
+  common.v1.Error error = 3;
+}
+
+message LoginRequest {
+  common.v1.RequestContext ctx = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message LoginResponse {
+  User user = 1;
+  AuthTokens tokens = 2;
+  common.v1.Error error = 3;
+}
+
+message RefreshTokenRequest {
+  common.v1.RequestContext ctx = 1;
+  string refresh_token = 2;
+}
+
+message RefreshTokenResponse {
+  AuthTokens tokens = 1;
+  common.v1.Error error = 2;
+}
+
+message GetProfileRequest {
+  common.v1.RequestContext ctx = 1;
+
+  // user_id is a UUID/ULID formatted string identifier.
+  string user_id = 2;
+}
+
+message GetProfileResponse {
+  User user = 1;
+  common.v1.Error error = 2;
+}
+
+message ValidateAccessTokenRequest {
+  common.v1.RequestContext ctx = 1;
+  string access_token = 2;
+}
+
+message ValidateAccessTokenResponse {
+  // user_id is a UUID/ULID formatted string identifier.
+  string user_id = 1;
+
+  repeated string roles = 2;
+  common.v1.Error error = 3;
+}
+
+service UserService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc GetProfile(GetProfileRequest) returns (GetProfileResponse);
+  rpc ValidateAccessToken(ValidateAccessTokenRequest) returns (ValidateAccessTokenResponse);
+}
