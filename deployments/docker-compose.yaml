@@ -269,6 +269,26 @@ services:
     networks:
       - ecom-net
 
+  user-service:
+    build:
+      context: ..
+      dockerfile: cmd/user-service/Dockerfile
+    container_name: user-service
+    restart: unless-stopped
+    environment:
+      USER_SERVICE_GRPC_ADDR: :50051
+      USER_DB_DSN: postgres://postgres:postgres@user-db:5432/${USER_DB_NAME}?sslmode=disable
+      USER_DB_MAX_CONNS: 10
+      LOG_LEVEL: info
+    ports:
+      # User Service gRPC
+      - "50051:50051"
+    depends_on:
+      user-db:
+        condition: service_healthy
+    networks:
+      - ecom-net
+
   api-gateway:
     build:
       context: ..
