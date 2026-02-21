@@ -2,10 +2,40 @@ syntax = "proto3";
 
 package common.v1;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/ozankenangungor/go-commerce/api/gen/go/common/v1;commonv1";
+
+// Compatibility notes:
+// - Do not renumber existing fields.
+// - If a field is removed or renamed in the future, reserve its number and name.
 
 message HealthCheckRequest {}
 
 message HealthCheckResponse {
   string status = 1;
+}
+
+// Error is a transport-safe error envelope for RPC responses.
+message Error {
+  // Stable machine-readable code (for example: AUTH_INVALID_CREDENTIALS).
+  string code = 1;
+
+  // Human-readable message that is safe for logs.
+  string message = 2;
+}
+
+// RequestContext carries request-scoped metadata for tracing and auth context.
+message RequestContext {
+  // request_id is a UUID/ULID formatted string for idempotency and tracing.
+  string request_id = 1;
+
+  // user_id is a UUID/ULID formatted string. Empty when unauthenticated.
+  string user_id = 2;
+}
+
+// AuditTimestamps provides shared timestamp primitives for reusable contracts.
+message AuditTimestamps {
+  google.protobuf.Timestamp created_at = 1;
+  google.protobuf.Timestamp updated_at = 2;
 }
