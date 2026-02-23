@@ -8,10 +8,15 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/ozankenangungor/go-commerce/internal/user/auth"
 	userconfig "github.com/ozankenangungor/go-commerce/internal/user/config"
 	userdb "github.com/ozankenangungor/go-commerce/internal/user/db"
 	usergrpc "github.com/ozankenangungor/go-commerce/internal/user/grpc"
 	userhandlers "github.com/ozankenangungor/go-commerce/internal/user/grpc/handlers"
+	userrepo "github.com/ozankenangungor/go-commerce/internal/user/repo"
+	userservice "github.com/ozankenangungor/go-commerce/internal/user/service"
 	"github.com/rs/zerolog"
 )
 
@@ -43,7 +48,33 @@ func main() {
 		os.Exit(1)
 	}
 
-	handler := userhandlers.NewUserService(logger, dbPool)
+	passwordHasher, err := auth.NewBcryptHasher(bcrypt.DefaultCost)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to initialize password hasher")
+		os.Exit(1)
+	}
+
+	jwtManager, err := auth.NewJWTManager(cfg.JWTHMACSecret, cfg.TokenIssuer)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to initialize jwt manager")
+		os.Exit(1)
+	}
+
+	authService, err := userservice.NewAuthService(userservice.Dependencies{
+		Logger:                 logger,
+		UserRepository:         userrepo.NewPostgresUserRepository(dbPool),
+		RefreshTokenRepository: userrepo.NewPostgresRefreshTokenRepository(dbPool),
+		PasswordHasher:         passwordHasher,
+		AccessTokenManager:     jwtManager,
+		AccessTokenTTL:         cfg.AccessTokenTTL,
+		RefreshTokenTTL:        cfg.RefreshTokenTTL,
+	})
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to initialize auth service")
+		os.Exit(1)
+	}
+
+	handler := userhandlers.NewUserService(logger, authService)
 	grpcServer, err := usergrpc.NewServer(cfg.UserServiceGRPCAddr, logger, handler)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create grpc server")

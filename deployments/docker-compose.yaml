@@ -280,6 +280,10 @@ services:
       USER_DB_DSN: postgres://postgres:postgres@user-db:5432/${USER_DB_NAME}?sslmode=disable
       USER_DB_MAX_CONNS: 10
       LOG_LEVEL: info
+      JWT_HMAC_SECRET: dev-insecure-secret-change-me
+      ACCESS_TOKEN_TTL: 15m
+      REFRESH_TOKEN_TTL: 720h
+      TOKEN_ISSUER: go-commerce
     ports:
       # User Service gRPC
       - "50051:50051"
